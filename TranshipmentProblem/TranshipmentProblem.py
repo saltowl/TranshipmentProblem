@@ -1,143 +1,156 @@
-def PrintOut():
-    GetDual()
-    nCost = 0
-    print()
-    print('    DEMAND' + ' ' * ( m * 10) + 'SUPPLY')
-    for y in aDemand:    
-        print('%10i' % y,)
-    print()
-    for x in range( n):
-        for y in range( m):
-            nCost += aCost[ x][ y] * aRoute[ x][ y]
-            if aRoute[ x][ y] == 0:
-                print('[<%2i>%4i]' %( aCost[ x][ y], aDual[ x][ y]))
-            else:
-                print('[<%2i>(%2i)]' %( aCost[ x][ y], aRoute[ x][ y] + 0.5))
-        print(' : %i' % aSupply[ x])
-    print('Cost: ', nCost)
-    print('Press ENTER to continue')
-    input()
-        
-def NorthWest():
-    ''' The simplest method to get an initial solution.
-    Not the most efficient'''
-    global aRoute
-    u  = 0
-    v  = 0
-    aS = [ 0] * m
-    aD = [ 0] * n
-    while u <= n - 1 and v <= m - 1:
-        if aDemand[ v] - aS[ v] < aSupply[ u] - aD[ u]:
-            z              = aDemand[ v] - aS[ v]
-            aRoute[ u][ v] = z
-            aS[ v]        += z
-            aD[ u]        += z
-            v             += 1
-        else:
-            z              = aSupply[ u] - aD[ u]
-            aRoute[ u][ v] = z
-            aS[ v]        += z
-            aD[ u]        += z
-            u             += 1
+def printOut():
+	getDual()
+	nCost = 0
+	print('DEMAND' + ' ' * (m * 11) + ' SUPPLY')
+	for x in range(n):
+		print('%6i' % aDemand[x], end=' ')
+		for y in range(m):
+			nCost += aCost[x][y] * aRoute[x][y]
+			if aRoute[x][y] == 0:
+				print('[<%2i>%4i]' % (aCost[x][y], aDual[x][y]), end=' ')
+			else:
+				print('[<%2i>(%2i)]' % (aCost[x][y], aRoute[x][y] + 0.5), end=' ')
+		print('%6i' % aSupply[x])
+	print('Cost: ', nCost)
+	print('Press ENTER to continue\n')
+	input()
+		
+def northWest():
+	''' The simplest method to get an initial solution.
+	Not the most efficient'''
+	global aRoute
+	u = 0
+	v = 0
+	aS = [0] * m
+	aD = [0] * n
+	while u <= n - 1 and v <= m - 1:
+		if aDemand[v] - aS[v] < aSupply[u] - aD[u]:
+			z = aDemand[v] - aS[v]
+			aRoute[u][v] = z
+			aS[v]        += z
+			aD[u]        += z
+			v            += 1
+		else:
+			z = aSupply[u] - aD[u]
+			aRoute[u][v] = z
+			aS[v]        += z
+			aD[u]        += z
+			u            += 1
 
-def NotOptimal():
-    global PivotN
-    global PivotM
-    nMax = -nVeryLargeNumber
-    GetDual()
-    for u in range( 0, n):
-        for v in range( 0, m):
-            x = aDual[ u][ v]
-            if x > nMax:
-                nMax = x
-                PivotN = u
-                PivotM = v
-    return ( nMax > 0)
+def notOptimal():
+	global PivotN
+	global PivotM
+	nMax = -nVeryLargeNumber
+	getDual()
+	for u in range(0, n):
+		for v in range(0, m):
+			x = aDual[u][v]
+			if x > nMax:
+				nMax = x
+				PivotN = u
+				PivotM = v
+	return (nMax > 0)
 
-def GetDual():
-    global aDual
-    for u in range( 0, n):
-        for v in range( 0, m):
-            aDual[ u][ v] = -0.5 # null value
-            if aRoute[ u][ v] == 0:
-                aPath = FindPath( u, v)
-                z     = -1
-                x     = 0
-                for w in aPath:
-                    x += z * aCost[ w[ 0]][ w[ 1]]
-                    z *= -1
-                aDual[ u][ v] = x
-                
-def FindPath( u, v):
-    aPath = [[ u, v]]
-    if not LookHorizontaly( aPath, u, v, u, v):
-        print('Path error, press key', u, v)
-        input()
-    return aPath
+def getDual():
+	global aDual
+	for u in range(0, n):
+		for v in range(0, m):
+			aDual[u][v] = -0.5 # null value
+			if aRoute[u][v] == 0:
+				aPath = findPath(u, v)
+				z = -1
+				x = 0
+				for w in aPath:
+					x += z * aCost[w[0]][w[1]]
+					z *= -1
+				aDual[u][v] = x
+				
+def findPath(u, v):
+	aPath = [[u, v]]
+	if not lookHorizontaly(aPath, u, v, u, v):
+		print('Path error, press key', u, v)
+		input()
+	return aPath
 
-def LookHorizontaly( aPath, u, v, u1, v1):
-    for i in range( 0, m):
-        if i != v and aRoute[ u][ i] != 0:
-            if i == v1:
-                aPath.append( [ u, i])
-                return True # complete circuit
-            if LookVerticaly( aPath, u, i, u1, v1):
-                aPath.append( [ u, i])
-                return True
-    return False # not found
+def lookHorizontaly(aPath, u, v, u1, v1):
+	for i in range(0, m):
+		if i != v and aRoute[u][i] != 0:
+			if i == v1:
+				aPath.append([u, i])
+				return True # complete circuit
+			if lookVerticaly(aPath, u, i, u1, v1):
+				aPath.append([u, i])
+				return True
+	return False # not found
 
-def LookVerticaly( aPath, u, v, u1, v1):
-    for i in range( 0, n):
-        if i != u and aRoute[ i][ v] != 0:
-            if LookHorizontaly( aPath, i, v, u1, v1):
-                aPath.append([ i, v])
-                return True
-    return False # not found
+def lookVerticaly(aPath, u, v, u1, v1):
+	for i in range(0, n):
+		if i != u and aRoute[i][v] != 0:
+			if lookHorizontaly(aPath, i, v, u1, v1):
+				aPath.append([i, v])
+				return True
+	return False # not found
 
-def BetterOptimal():
-    global aRoute
-    aPath = FindPath( PivotN, PivotM)
-    nMin  = nVeryLargeNumber
-    for w in range( 1, len( aPath), 2):
-        t = aRoute[ aPath[ w][ 0]][ aPath[ w][ 1]]
-        if t < nMin:
-            nMin = t
-    for w in range( 1 , len( aPath), 2):
-        aRoute[ aPath[ w][ 0]][ aPath[ w][ 1]]         -= nMin
-        aRoute[ aPath[ w - 1][ 0]][ aPath[ w - 1][ 1]] += nMin
+def betterOptimal():
+	global aRoute
+	aPath = findPath(PivotN, PivotM)
+	nMin = nVeryLargeNumber
+	for w in range(1, len(aPath), 2):
+		t = aRoute[aPath[w][0]][aPath[w][1]]
+		if t < nMin:
+			nMin = t
+	for w in range(1 , len(aPath), 2):
+		aRoute[aPath[w][0]][aPath[w][1]]         -= nMin
+		aRoute[aPath[w - 1][0]][aPath[w - 1][1]] += nMin
 
-# example 1
-aCost = [[ 1, 2, 4, 0]
-        ,[ 1, 3, 4, 0]
-        ,[ 2, 2, 3, 0]]
-        #,[ 4, 2, 2, 1, 2, 2]]
+def correctSourceTable():
+	global aSupply, aDemand, aCost
+	sumSupply = 0
+	sumDemand = 0
 
-aDemand = [ 50, 60, 10, 40]
-aSupply = [ 90, 30, 40]
+	for sup in aSupply:
+		sumSupply += sup
+	for dem in aDemand:
+		sumDemand += dem
 
-n = len( aSupply)
-m = len( aDemand)
-nVeryLargeNumber = 99999999999
+	if sumSupply > sumDemand:
+		aDemand.append(sumSupply - sumDemand)
+		for i in range(len(aCost)):
+			aCost[i].append(0)
+
+aCost = [[1, 2, 4]
+		,[1, 3, 4]
+		,[2, 2, 3]]
+
+aDemand = [50, 60, 10]
+aSupply = [90, 30, 40]
+
+correctSourceTable()
+
+n = len(aSupply)
+m = len(aDemand)
+nVeryLargeNumber = float('inf')
+
 # add a small amount to prevent degeneracy
 # degeneracy can occur when the sums of subsets of supply and demand equal
 elipsis = 0.001
 for k in aDemand:
-    k += elipsis / len( aDemand)
-aSupply[ 1] += elipsis
+	k += elipsis / len(aDemand)
+aSupply[1] += elipsis
 # initialisation
 aRoute = []
-for x in range( n):
-    aRoute.append( [ 0] * m)
-aDual  = []
-for x in range( n):
-    aDual.append( [ -1] * m)
-NorthWest()
+for x in range(n):
+	aRoute.append([0] * m)
+aDual = []
+for x in range(n):
+	aDual.append([-1] * m)
+northWest()
 PivotN = -1
 PivotM = -1
-PrintOut()
+printOut()
 # MAIN
-while NotOptimal():
-    print('PIVOTING ON', PivotN, PivotM)
-    BetterOptimal()
-    PrintOut()
+while notOptimal():
+	print('PIVOTING ON', PivotN, PivotM)
+	betterOptimal()
+	printOut()
 print("FINISHED")
